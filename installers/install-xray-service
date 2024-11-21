@@ -1,0 +1,267 @@
+#!/bin/bash
+
+# Bersihkan terminal
+clear
+
+cat >/etc/systemd/system/xray.service <<EOF
+Description=Xray Service
+Documentation=https://github.com
+After=network.target nss-lookup.target
+[Service]
+User=www-data
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BIND_SERVICE
+AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE
+NoNewPrivileges=true
+ExecStart=/usr/local/bin/xray run -config /etc/xray/config.json
+Restart=on-failure
+RestartPreventExitStatus=23
+filesNPROC=10000
+filesNOFILE=1000000
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# service shadowsok quota
+cat >/etc/systemd/system/quota-ssr.service << EOF
+[Unit]
+Description=Limit Quota Shadowsocks Accounts Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/Quota-Xray-Sdwsk
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# service trojan quota
+cat >/etc/systemd/system/quota-tro.service << EOF
+[Unit]
+Description=Limit Quota Trojan Accounts Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/Quota-Xray-Trojan
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# service vmess quota
+cat >/etc/systemd/system/quota-vme.service << EOF
+[Unit]
+Description=Limit Quota Vmess Accounts Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/Quota-Xray-Vmess
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# service vless quota
+cat >/etc/systemd/system/quota-vle.service << EOF
+[Unit]
+Description=Limit Quota Vless Accounts Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/Quota-Xray-Vless
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+
+# service kill shadowsok 
+cat >/etc/systemd/system/kill-ssr.service << EOF
+[Unit]
+Description=Auto Kill Shdwsock Accounts Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/bin/bash -c '/usr/local/sbin/killSS'
+Restart=always
+RestartSec=10
+StartLimitInterval=0
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# service kill Vmess
+cat >/etc/systemd/system/kill-vme.service << EOF
+[Unit]
+Description=Auto Kill Vmess Accounts Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/bin/bash -c '/usr/local/sbin/killVM'
+Restart=always
+RestartSec=10
+StartLimitInterval=0
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# service kill Vless 
+cat >/etc/systemd/system/kill-vle.service << EOF
+[Unit]
+Description=Auto Kill Vless Accounts Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/bin/bash -c '/usr/local/sbin/killVL'
+Restart=always
+RestartSec=10
+StartLimitInterval=0
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# service kill Trojan
+cat >/etc/systemd/system/kill-tro.service << EOF
+[Unit]
+Description=Auto Kill Trojan Accounts Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/bin/bash -c '/usr/local/sbin/killTR'
+Restart=always
+RestartSec=10
+StartLimitInterval=0
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# rc-local
+cat >/etc/systemd/system/rc-local.service <<EOF
+[Unit]
+Description=/etc/rc.local
+ConditionPathExists=/etc/rc.local
+[Service]
+Type=forking
+ExecStart=/etc/rc.local start
+TimeoutSec=0
+StandardOutput=tty
+RemainAfterExit=yes
+SysVStartPriority=99
+[Install]
+WantedBy=multi-user.target
+EOF
+
+cat >/etc/systemd/system/lock_vmess.service<<-END
+[Unit]
+Description=Xray Multi-login Lock Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/bin/bash /usr/local/sbin/lockedvme
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+END
+
+cat >/etc/systemd/system/lock_vless.service<<-END
+[Unit]
+Description=Xray Multi-login Lock Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/bin/bash /usr/local/sbin/lockedvle
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+END
+
+
+cat >/etc/systemd/system/lock_shadowsocks.service<<-END
+[Unit]
+Description=Xray Multi-login Lock Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/bin/bash /usr/local/sbin/lockedssr
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+END
+
+cat >/etc/systemd/system/lock_trojan.service<<-END
+[Unit]
+Description=Xray Multi-login Lock Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/bin/bash /usr/local/sbin/lockedtro
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+END
+
+cat >/etc/systemd/system/lock_ssh.service<<-END
+[Unit]
+Description=Xray Multi-login Lock Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/bin/bash /usr/local/sbin/lockedssh
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+END
+
+
+chmod +x /etc/systemd/system/*.service
+systemctl daemon-reload
+systemctl restart lock_ssh
+systemctl restart lock_vmess
+systemctl restart lock_vless
+systemctl restart lock_trojan
+systemctl restart lock_shadowsocks
+
+
+
+echo "/bin/false" >>/etc/shells
+echo "/usr/sbin/nologin" >>/etc/shells
+
+cat >/etc/rc.local <<EOF
+iptables -I INPUT -p udp --dport 5300 -j ACCEPT
+iptables -t nat -I PREROUTING -p udp --dport 53 -j REDIRECT --to-ports 5300
+systemctl restart netfilter-persistent
+exit 0
+EOF
+chmod +x /etc/rc.local
+AUTOREB=$(cat /home/daily_reboot)
+SETT=11
+if [ $AUTOREB -gt $SETT ]; then
+TIME_DATE="PM"
+else
+TIME_DATE="AM"
+fi

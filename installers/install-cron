@@ -1,0 +1,55 @@
+#!/bin/bash
+clear
+
+# jadwalkan delete Account expired
+cat >/etc/cron.d/xp<<-END
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+*/30 * * * * root /usr/local/sbin/xp
+END
+
+# jadwalkan setiap 10 menit membersihkan Log
+cat >/etc/cron.d/logclean<<-END
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+*/10 * * * * root /usr/local/sbin/clearlog
+END
+
+# jadwalkan Autobackup Via GH setiap 50 menit
+cat >/etc/cron.d/autobackupgh<<-END
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+*/50 * * * * root /usr/local/sbin/autobekap-gh
+END
+
+# jadwalkan Autobackup Via TELE setiap 50 menit
+cat >/etc/cron.d/autobackuptele<<-END
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+*/50 * * * * root /usr/local/sbin/autobekap-tele
+END
+
+# jadwal reboot server
+cat >/etc/cron.d/daily_reboot <<-END
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+0 5 * * * root /sbin/reboot
+END
+
+echo "*/1 * * * * root echo -n > /var/log/nginx/access.log" >/etc/cron.d/log.nginx
+echo "*/1 * * * * root echo -n > /var/log/nginx/vmess.log" >/etc/cron.d/log.nginxvle
+echo "*/1 * * * * root echo -n > /var/log/nginx/vless.log" >/etc/cron.d/log.nginxvme
+echo "*/1 * * * * root echo -n > /var/log/nginx/trojan.log" >/etc/cron.d/log.nginxssr
+echo "*/1 * * * * root echo -n > /var/log/nginx/shadowsocks.log" >/etc/cron.d/log.nginxtro
+echo "*/1 * * * * root echo -n > /etc/lunatic/vless/log/vless.log" >>/etc/cron.d/log.xrayvle
+echo "*/1 * * * * root echo -n > /etc/lunatic/vmess/log/vmess.log" >>/etc/cron.d/log.xrayvme
+echo "*/1 * * * * root echo -n > /etc/lunatic/trojan/log/trojan.log" >>/etc/cron.d/log.xraytro
+echo "*/1 * * * * root echo -n > /etc/lunatic/shadowsocks/log/shadowsocks.log >>/etc/cron.d/log.xrayssr
+
+cat >/home/daily_reboot <<-END
+5
+END
+
+
+systemctl restart cron
+service cron restart
